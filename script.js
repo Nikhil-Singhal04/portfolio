@@ -6,6 +6,7 @@ const year = document.querySelector('#year');
 const headshotPreview = document.querySelector('#headshotPreview');
 const themeToggle = document.querySelector('.theme-toggle');
 const root = document.documentElement;
+const projectCards = document.querySelectorAll('.project-card');
 
 const getSavedTheme = () => {
   try {
@@ -71,6 +72,43 @@ if (menuToggle && nav) {
 if (headshotPreview) {
   headshotPreview.addEventListener('error', () => {
     headshotPreview.src = 'assets/headshot-placeholder.svg';
+  });
+}
+
+const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+const supportsPointerEvents = 'PointerEvent' in window;
+
+const resetProjectCardMotion = (card) => {
+  card.style.setProperty('--project-tilt-x', '0deg');
+  card.style.setProperty('--project-tilt-y', '0deg');
+  card.style.setProperty('--project-glow-x', '50%');
+  card.style.setProperty('--project-glow-y', '50%');
+};
+
+if (!motionQuery.matches && supportsPointerEvents && projectCards.length > 0) {
+  projectCards.forEach((card) => {
+    card.addEventListener('pointermove', (event) => {
+      if (event.pointerType && event.pointerType !== 'mouse') {
+        return;
+      }
+
+      const rect = card.getBoundingClientRect();
+      const localX = event.clientX - rect.left;
+      const localY = event.clientY - rect.top;
+      const ratioX = Math.min(Math.max(localX / rect.width, 0), 1);
+      const ratioY = Math.min(Math.max(localY / rect.height, 0), 1);
+      const tiltY = (ratioX - 0.5) * 7;
+      const tiltX = (0.5 - ratioY) * 7;
+
+      card.style.setProperty('--project-tilt-x', `${tiltX.toFixed(2)}deg`);
+      card.style.setProperty('--project-tilt-y', `${tiltY.toFixed(2)}deg`);
+      card.style.setProperty('--project-glow-x', `${(ratioX * 100).toFixed(1)}%`);
+      card.style.setProperty('--project-glow-y', `${(ratioY * 100).toFixed(1)}%`);
+    });
+
+    card.addEventListener('pointerleave', () => {
+      resetProjectCardMotion(card);
+    });
   });
 }
 
