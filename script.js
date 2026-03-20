@@ -7,6 +7,14 @@ const headshotPreview = document.querySelector('#headshotPreview');
 const themeToggle = document.querySelector('.theme-toggle');
 const root = document.documentElement;
 const projectCards = document.querySelectorAll('.project-card');
+const portfolioBot = document.querySelector('#portfolioBot');
+const botFab = document.querySelector('#botFab');
+const botPanel = document.querySelector('#botPanel');
+const botClose = document.querySelector('#botClose');
+const botMessages = document.querySelector('#botMessages');
+const botForm = document.querySelector('#botForm');
+const botInput = document.querySelector('#botInput');
+const botQuickActions = document.querySelector('#botQuickActions');
 
 const getSavedTheme = () => {
   try {
@@ -72,6 +80,242 @@ if (menuToggle && nav) {
 if (headshotPreview) {
   headshotPreview.addEventListener('error', () => {
     headshotPreview.src = 'assets/headshot-placeholder.svg';
+  });
+}
+
+const getText = (selector, scope = document) => {
+  const node = scope.querySelector(selector);
+  return node ? node.textContent.trim() : '';
+};
+
+const getAllText = (selector, scope = document) => {
+  return Array.from(scope.querySelectorAll(selector))
+    .map((node) => node.textContent.trim())
+    .filter(Boolean);
+};
+
+const tokenize = (text) => {
+  return (text || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9+\s]/g, ' ')
+    .split(/\s+/)
+    .filter((token) => token.length > 1);
+};
+
+const scoreOverlap = (queryTokens, text) => {
+  const targetTokens = new Set(tokenize(text));
+  return queryTokens.reduce((score, token) => score + (targetTokens.has(token) ? 1 : 0), 0);
+};
+
+const buildPortfolioKnowledge = () => {
+  const name = getText('.brand') || 'Nikhil Singhal';
+  const role = getText('.hero-copy .eyebrow') || 'DevOps Engineer';
+  const about = getText('.hero-copy .lead');
+  const skills = getAllText('#skills .skill-item');
+
+  const projects = Array.from(document.querySelectorAll('#projects .project-card')).map((card) => {
+    return {
+      title: getText('h3', card),
+      period: getText('.project-meta span', card),
+      bullets: getAllText('ul li', card)
+    };
+  });
+
+  const certifications = getAllText('#skills .cert-item h3');
+  const training = getText('#skills .training-block h3');
+
+  const education = Array.from(document.querySelectorAll('#education .timeline-item')).map((item) => {
+    return {
+      institute: getText('h3', item),
+      detail: getText('p.meta', item),
+      locationAndDate: getText('p.meta:nth-of-type(2)', item)
+    };
+  });
+
+  const emailNode = Array.from(document.querySelectorAll('#contact .contact-grid a')).find((link) =>
+    link.getAttribute('href')?.startsWith('mailto:')
+  );
+  const linkedinNode = Array.from(document.querySelectorAll('#contact .contact-grid a')).find((link) =>
+    link.getAttribute('href')?.includes('linkedin.com')
+  );
+  const githubNode = Array.from(document.querySelectorAll('#contact .contact-grid a')).find((link) =>
+    link.getAttribute('href')?.includes('github.com')
+  );
+
+  const emailHref = emailNode ? emailNode.getAttribute('href') || '' : '';
+  const email = emailHref.toLowerCase().startsWith('mailto:')
+    ? emailHref.replace(/^mailto:/i, '').trim()
+    : emailNode
+      ? emailNode.textContent.trim()
+      : '';
+
+  const linkedinUrl = linkedinNode ? (linkedinNode.getAttribute('href') || '').trim() : '';
+  const githubUrl = githubNode ? (githubNode.getAttribute('href') || '').trim() : '';
+
+  return {
+    name,
+    role,
+    about,
+    skills,
+    projects,
+    certifications,
+    training,
+    education,
+    contact: {
+      email,
+      linkedin: linkedinUrl,
+      github: githubUrl
+    }
+  };
+};
+
+const getPortfolioAnswer = (question, knowledge) => {
+  const lowerQuestion = question.toLowerCase();
+  const tokens = tokenize(question);
+
+  if (/\b(hi|hello|hey|hii)\b/.test(lowerQuestion)) {
+    return `Hi! Ask me anything about ${knowledge.name}'s portfolio, like projects, skills, education, certifications, or contact details.`;
+  }
+
+  if (/\b(who|about|introduce|profile|devops)\b/.test(lowerQuestion)) {
+    return `${knowledge.name} is a ${knowledge.role}. ${knowledge.about}`;
+  }
+
+  if (/\b(skill|skills|tech|stack|tools|technology)\b/.test(lowerQuestion)) {
+    const topSkills = knowledge.skills.slice(0, 10).join(', ');
+    return `Top skills include ${topSkills}. Overall, the portfolio lists ${knowledge.skills.length}+ tools and technologies.`;
+  }
+
+  if (/\b(project|projects|work|built|build)\b/.test(lowerQuestion)) {
+    const rankedProjects = knowledge.projects
+      .map((project) => ({
+        ...project,
+        score: scoreOverlap(tokens, `${project.title} ${project.period} ${project.bullets.join(' ')}`)
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    if (rankedProjects[0] && rankedProjects[0].score >= 2) {
+      const focused = rankedProjects[0];
+      return `${focused.title} (${focused.period}): ${focused.bullets.join(' ')}`;
+    }
+
+    const list = knowledge.projects.map((project) => `${project.title} (${project.period})`).join(' | ');
+    return `Main projects are: ${list}. Ask me about any one project name for details.`;
+  }
+
+  if (/\b(certification|certifications|certificate|training|course|courses)\b/.test(lowerQuestion)) {
+    const certList = knowledge.certifications.join(', ');
+    return `Certifications include ${certList}. Training highlight: ${knowledge.training}.`;
+  }
+
+  if (/\b(education|college|school|cgpa|university|study)\b/.test(lowerQuestion)) {
+    const eduLine = knowledge.education
+      .map((item) => `${item.institute} - ${item.detail}`)
+      .join(' | ');
+    return `Education summary: ${eduLine}.`;
+  }
+
+  if (/\b(email|mail|gmail)\b/.test(lowerQuestion) && !/\b(linkedin|github)\b/.test(lowerQuestion)) {
+    return knowledge.contact.email
+      ? `Nikhil's email is ${knowledge.contact.email}.`
+      : `I could not find the email in the portfolio contact section.`;
+  }
+
+  if (/\b(linkedin)\b/.test(lowerQuestion)) {
+    return knowledge.contact.linkedin
+      ? `Nikhil's LinkedIn URL is ${knowledge.contact.linkedin}.`
+      : `I could not find the LinkedIn URL in the portfolio contact section.`;
+  }
+
+  if (/\b(github)\b/.test(lowerQuestion)) {
+    return knowledge.contact.github
+      ? `Nikhil's GitHub URL is ${knowledge.contact.github}.`
+      : `I could not find the GitHub URL in the portfolio contact section.`;
+  }
+
+  if (/\b(contact|email|mail|linkedin|github|reach|connect|hire)\b/.test(lowerQuestion)) {
+    return `You can reach ${knowledge.name} via Email: ${knowledge.contact.email}, LinkedIn: ${knowledge.contact.linkedin}, GitHub: ${knowledge.contact.github}.`;
+  }
+
+  const documents = [
+    `${knowledge.name} ${knowledge.role} ${knowledge.about}`,
+    ...knowledge.projects.map((project) => `${project.title} ${project.period} ${project.bullets.join(' ')}`),
+    `Skills ${knowledge.skills.join(' ')}`,
+    `Certifications ${knowledge.certifications.join(' ')} ${knowledge.training}`,
+    `Education ${knowledge.education.map((item) => `${item.institute} ${item.detail}`).join(' ')}`,
+    `Contact ${knowledge.contact.email} ${knowledge.contact.linkedin} ${knowledge.contact.github}`
+  ];
+
+  const topScore = Math.max(...documents.map((doc) => scoreOverlap(tokens, doc)));
+
+  if (topScore >= 2) {
+    return `I found relevant details in the portfolio. Try asking directly about projects, skills, certifications, education, or contact for a focused answer.`;
+  }
+
+  return `I can help with: about profile, project details, skills list, certifications/training, education, and contact details.`;
+};
+
+const addBotMessage = (message, sender = 'bot') => {
+  if (!botMessages) {
+    return;
+  }
+
+  const bubble = document.createElement('article');
+  bubble.className = `bot-bubble ${sender === 'user' ? 'bot-bubble-user' : 'bot-bubble-bot'}`;
+  bubble.textContent = message;
+  botMessages.appendChild(bubble);
+  botMessages.scrollTop = botMessages.scrollHeight;
+};
+
+if (portfolioBot && botFab && botPanel && botForm && botInput) {
+  const knowledge = buildPortfolioKnowledge();
+
+  const setBotOpenState = (open) => {
+    portfolioBot.classList.toggle('is-open', open);
+    botFab.setAttribute('aria-expanded', String(open));
+
+    if (open) {
+      botInput.focus();
+    }
+  };
+
+  botFab.addEventListener('click', () => {
+    const open = !portfolioBot.classList.contains('is-open');
+    setBotOpenState(open);
+  });
+
+  if (botClose) {
+    botClose.addEventListener('click', () => setBotOpenState(false));
+  }
+
+  botForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const question = botInput.value.trim();
+
+    if (!question) {
+      return;
+    }
+
+    addBotMessage(question, 'user');
+    botInput.value = '';
+
+    const answer = getPortfolioAnswer(question, knowledge);
+    window.setTimeout(() => addBotMessage(answer, 'bot'), 160);
+  });
+
+  if (botQuickActions) {
+    botQuickActions.querySelectorAll('.bot-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        botInput.value = chip.textContent.trim();
+        botForm.requestSubmit();
+      });
+    });
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && portfolioBot.classList.contains('is-open')) {
+      setBotOpenState(false);
+    }
   });
 }
 

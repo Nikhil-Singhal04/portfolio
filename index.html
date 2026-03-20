@@ -22,6 +22,7 @@
       <a href="#about">About</a>
       <a href="#projects">Projects</a>
       <a href="#skills">Skills</a>
+      <a href="#education">Education</a>
       <a href="#contact">Contact</a>
     </nav>
     <div class="header-actions">
@@ -34,7 +35,7 @@
     <section class="hero reveal" id="about">
       <div class="hero-layout">
         <div class="hero-copy">
-          <p class="eyebrow">DevOps Engineer</p>
+          <p class="eyebrow">DevOps & Cloud Engineer</p>
           <h1>Engineering delivery pipelines that ship fast, safe, and at scale.</h1>
           <p class="lead">
             I build CI/CD systems with Jenkins, Docker, AWS, and Kubernetes to turn code into reliable production deployments.
@@ -222,24 +223,22 @@
         </div>
 
         <div class="cert-list">
-            <a class="cert-link" href="https://drive.google.com/file/d/10h--l6z0ZaOghpkIYUNTQuDvTdO7BbN5/view" target="_blank" rel="noreferrer">
-
-                <div class="cert-item">
-                    <h3>Introduction to Git and GitHub</h3>
-                    <p>Coursera - Dec 2025</p>
-                </div>
-            </a>
-            <a class="cert-link" href="https://drive.google.com/file/d/1ccJDNQPZvofVI8AeM_6iBHwBkZ85X-c0/view" target="_blank" rel="noreferrer">
-                  <div class="cert-item">
-            <h3>Data Structure and Algorithm using C++ Programming</h3>
-            <p>byteXL - Jul 2025</p>
-
-        </div>
-    </a>
+          <a class="cert-link" href="https://drive.google.com/file/d/10h--l6z0ZaOghpkIYUNTQuDvTdO7BbN5/view" target="_blank" rel="noreferrer">
+            <div class="cert-item">
+              <h3>Introduction to Git and GitHub</h3>
+              <p>Coursera - Dec 2025</p>
+            </div>
+          </a>
+          <a class="cert-link" href="https://drive.google.com/file/d/1ccJDNQPZvofVI8AeM_6iBHwBkZ85X-c0/view" target="_blank" rel="noreferrer">
+            <div class="cert-item">
+              <h3>Data Structure and Algorithm using C++ Programming</h3>
+              <p>byteXL - Jul 2025</p>
+            </div>
+          </a>
         </div>
 
         <div class="training-block">
-          <h3>Training: Data Structure and Algorithm using C++ Programming - byteXL</h3>
+          <h3>Data Structure and Algorithm using C++ Programming - byteXL</h3>
           <ul>
             <li>Strengthened fundamentals in arrays, linked lists, stacks, queues, trees, and graphs.</li>
             <li>Practiced recursion, dynamic programming, and heap-based problem solving.</li>
@@ -289,6 +288,7 @@
       <a href="mailto:nikhilsinghal2019@gmail.com">Gmail</a>
       <a href="https://linkedin.com/in/nikhil-singhal04/" target="_blank" rel="noreferrer">LinkedIn</a>
       <a href="https://github.com/Nikhil-Singhal04" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="assets/Nikhil-Singhal-Resume.pdf" download>Download Resume</a>
       <!-- <p>Ateli Mandi, 123021</p> -->
     </div>
   </section>
@@ -296,5 +296,39 @@
   <footer class="site-footer">
     <p>© <span id="year"></span> Nikhil Singhal | DevOps Engineer</p>
   </footer>
+
+  <section class="portfolio-bot" id="portfolioBot" aria-label="Portfolio assistant">
+    <button class="bot-fab" id="botFab" type="button" aria-expanded="false" aria-controls="botPanel">
+      Helper
+    </button>
+
+    <div class="bot-panel" id="botPanel" role="dialog" aria-modal="false" aria-labelledby="botTitle">
+      <header class="bot-header">
+        <div>
+          <p class="bot-eyebrow">AI Assistant</p>
+          <h3 id="botTitle">Portfolio Bot</h3>
+        </div>
+        <button class="bot-close" id="botClose" type="button" aria-label="Close chatbot">Close</button>
+      </header>
+
+      <div class="bot-messages" id="botMessages" aria-live="polite">
+        <article class="bot-bubble bot-bubble-bot">
+          Hi, I can answer questions about Nikhil's projects, skills, education, certifications, and contact details.
+        </article>
+      </div>
+
+      <div class="bot-quick-actions" id="botQuickActions">
+        <button type="button" class="bot-chip">Top skills</button>
+        <button type="button" class="bot-chip">Projects summary</button>
+        <button type="button" class="bot-chip">Contact details</button>
+      </div>
+
+      <form class="bot-form" id="botForm">
+        <label class="bot-visually-hidden" for="botInput">Ask about the portfolio</label>
+        <input id="botInput" class="bot-input" type="text" placeholder="Ask anything about this portfolio" autocomplete="off" />
+        <button class="bot-send" type="submit">Send</button>
+      </form>
+    </div>
+  </section>
 </body>
 </html>
