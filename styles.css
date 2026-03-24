@@ -337,6 +337,7 @@ main,
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
   box-shadow: 0 8px 16px rgba(12, 68, 83, 0.14);
   animation: slideDownFade 3.5s ease-in-out 0.2s infinite;
+  margin-bottom: 2rem;
 }
 
 h1,
