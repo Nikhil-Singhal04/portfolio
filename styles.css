@@ -286,7 +286,8 @@ body {
 .cta-outline {
   border-color: var(--outline-border);
   color: var(--text);
-  background: transparent;
+  background: var(--bg);
+  border-width: 2px;
 }
 
 main,
