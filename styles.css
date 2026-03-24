@@ -1183,6 +1183,9 @@ h2 {
 .panel {
   padding: 1.65rem;
   transition: transform 0.26s ease, box-shadow 0.26s ease, border-color 0.26s ease;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
 }
 
 .split .panel:hover,
@@ -1195,6 +1198,7 @@ h2 {
   align-items: center;
   flex-direction: column;
   margin-bottom: 1.45rem;
+  grid-column: 1 / -1;
 }
 
 .skill-metrics {
