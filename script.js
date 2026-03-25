@@ -107,6 +107,42 @@ const scoreOverlap = (queryTokens, text) => {
   return queryTokens.reduce((score, token) => score + (targetTokens.has(token) ? 1 : 0), 0);
 };
 
+const getRankedProjects = (question, projects) => {
+  const tokens = tokenize(question);
+
+  return projects
+    .map((project) => ({
+      ...project,
+      score: scoreOverlap(
+        tokens,
+        `${project.title} ${project.period} ${project.bullets.join(' ')} ${project.technologies.join(' ')}`
+      )
+    }))
+    .sort((a, b) => b.score - a.score);
+};
+
+const getProjectByTitle = (projects, title) => {
+  if (!title) {
+    return null;
+  }
+
+  return projects.find((project) => project.title === title) || null;
+};
+
+const formatProjectExplanation = (project) => {
+  if (!project) {
+    return '';
+  }
+
+  const stackLine = project.technologies.length > 0
+    ? `Tech stack: ${project.technologies.join(', ')}.`
+    : 'Tech stack details are available in the project card.';
+  const bullets = project.bullets.join(' ');
+  const repoLine = project.repoUrl ? `Repository: ${project.repoUrl}` : '';
+
+  return `${project.title} (${project.period}) is focused on ${bullets} ${stackLine} ${repoLine}`.trim();
+};
+
 const buildPortfolioKnowledge = () => {
   const name = getText('.brand') || 'Nikhil Singhal';
   const role = getText('.hero-copy .eyebrow') || 'DevOps Engineer';
@@ -117,7 +153,9 @@ const buildPortfolioKnowledge = () => {
     return {
       title: getText('h3', card),
       period: getText('.project-meta span', card),
-      bullets: getAllText('ul li', card)
+      bullets: getAllText('ul li', card),
+      technologies: getAllText('.tech-row span', card),
+      repoUrl: getText('.cta-outline', card) ? (card.querySelector('.cta-outline')?.getAttribute('href') || '').trim() : ''
     };
   });
 
@@ -169,72 +207,118 @@ const buildPortfolioKnowledge = () => {
   };
 };
 
-const getPortfolioAnswer = (question, knowledge) => {
+const getPortfolioAnswer = (question, knowledge, botContext = {}) => {
   const lowerQuestion = question.toLowerCase();
   const tokens = tokenize(question);
+  const rankedProjects = getRankedProjects(question, knowledge.projects);
+  const matchedProject = rankedProjects[0] && rankedProjects[0].score >= 2 ? rankedProjects[0] : null;
+
+  const asksToExplainProject = /\b(explain|describe|detail|details|walk|breakdown|tell)\b/.test(lowerQuestion)
+    && /\b(project|this project|that project)\b/.test(lowerQuestion);
+
+  const asksForThisProject = /\b(this project|that project|current project)\b/.test(lowerQuestion);
+  const asksToExplainByName = /\b(explain|describe|detail|details|walk|breakdown|tell)\b/.test(lowerQuestion)
+    && Boolean(matchedProject);
+
+  if (asksToExplainProject || asksForThisProject || asksToExplainByName) {
+    const contextProject = getProjectByTitle(knowledge.projects, botContext.activeProjectTitle);
+    const focusedProject = asksForThisProject ? (contextProject || matchedProject) : (matchedProject || contextProject);
+
+    if (focusedProject) {
+      return {
+        text: formatProjectExplanation(focusedProject),
+        context: {
+          activeProjectTitle: focusedProject.title
+        }
+      };
+    }
+
+    const projectNames = knowledge.projects.map((project) => project.title).join(' | ');
+    return {
+      text: `Yes, I can explain your projects. Please mention a project name or click one project card first, then ask \"explain this project\". Available projects: ${projectNames}.`
+    };
+  }
 
   if (/\b(hi|hello|hey|hii)\b/.test(lowerQuestion)) {
-    return `Hi! Ask me anything about ${knowledge.name}'s portfolio, like projects, skills, education, certifications, or contact details.`;
+    return {
+      text: `Hi! Ask me anything about ${knowledge.name}'s portfolio, like projects, skills, education, certifications, or contact details.`
+    };
   }
 
   if (/\b(who|about|introduce|profile|devops)\b/.test(lowerQuestion)) {
-    return `${knowledge.name} is a ${knowledge.role}. ${knowledge.about}`;
+    return {
+      text: `${knowledge.name} is a ${knowledge.role}. ${knowledge.about}`
+    };
   }
 
   if (/\b(skill|skills|tech|stack|tools|technology)\b/.test(lowerQuestion)) {
     const topSkills = knowledge.skills.slice(0, 10).join(', ');
-    return `Top skills include ${topSkills}. Overall, the portfolio lists ${knowledge.skills.length}+ tools and technologies.`;
+    return {
+      text: `Top skills include ${topSkills}. Overall, the portfolio lists ${knowledge.skills.length}+ tools and technologies.`
+    };
   }
 
   if (/\b(project|projects|work|built|build)\b/.test(lowerQuestion)) {
-    const rankedProjects = knowledge.projects
-      .map((project) => ({
-        ...project,
-        score: scoreOverlap(tokens, `${project.title} ${project.period} ${project.bullets.join(' ')}`)
-      }))
-      .sort((a, b) => b.score - a.score);
-
     if (rankedProjects[0] && rankedProjects[0].score >= 2) {
       const focused = rankedProjects[0];
-      return `${focused.title} (${focused.period}): ${focused.bullets.join(' ')}`;
+      return {
+        text: `${focused.title} (${focused.period}): ${focused.bullets.join(' ')}`,
+        context: {
+          activeProjectTitle: focused.title
+        }
+      };
     }
 
     const list = knowledge.projects.map((project) => `${project.title} (${project.period})`).join(' | ');
-    return `Main projects are: ${list}. Ask me about any one project name for details.`;
+    return {
+      text: `Main projects are: ${list}. Ask me about any one project name for details.`
+    };
   }
 
   if (/\b(certification|certifications|certificate|training|course|courses)\b/.test(lowerQuestion)) {
     const certList = knowledge.certifications.join(', ');
-    return `Certifications include ${certList}. Training highlight: ${knowledge.training}.`;
+    return {
+      text: `Certifications include ${certList}. Training highlight: ${knowledge.training}.`
+    };
   }
 
   if (/\b(education|college|school|cgpa|university|study)\b/.test(lowerQuestion)) {
     const eduLine = knowledge.education
       .map((item) => `${item.institute} - ${item.detail}`)
       .join(' | ');
-    return `Education summary: ${eduLine}.`;
+    return {
+      text: `Education summary: ${eduLine}.`
+    };
   }
 
   if (/\b(email|mail|gmail)\b/.test(lowerQuestion) && !/\b(linkedin|github)\b/.test(lowerQuestion)) {
-    return knowledge.contact.email
-      ? `Nikhil's email is ${knowledge.contact.email}.`
-      : `I could not find the email in the portfolio contact section.`;
+    return {
+      text: knowledge.contact.email
+        ? `Nikhil's email is ${knowledge.contact.email}.`
+        : `I could not find the email in the portfolio contact section.`
+    };
   }
 
   if (/\b(linkedin)\b/.test(lowerQuestion)) {
-    return knowledge.contact.linkedin
-      ? `Nikhil's LinkedIn URL is ${knowledge.contact.linkedin}.`
-      : `I could not find the LinkedIn URL in the portfolio contact section.`;
+    return {
+      text: knowledge.contact.linkedin
+        ? `Nikhil's LinkedIn URL is ${knowledge.contact.linkedin}.`
+        : `I could not find the LinkedIn URL in the portfolio contact section.`
+    };
   }
 
   if (/\b(github)\b/.test(lowerQuestion)) {
-    return knowledge.contact.github
-      ? `Nikhil's GitHub URL is ${knowledge.contact.github}.`
-      : `I could not find the GitHub URL in the portfolio contact section.`;
+    return {
+      text: knowledge.contact.github
+        ? `Nikhil's GitHub URL is ${knowledge.contact.github}.`
+        : `I could not find the GitHub URL in the portfolio contact section.`
+    };
   }
 
   if (/\b(contact|email|mail|linkedin|github|reach|connect|hire)\b/.test(lowerQuestion)) {
-    return `You can reach ${knowledge.name} via Email: ${knowledge.contact.email}, LinkedIn: ${knowledge.contact.linkedin}, GitHub: ${knowledge.contact.github}.`;
+    return {
+      text: `You can reach ${knowledge.name} via Email: ${knowledge.contact.email}, LinkedIn: ${knowledge.contact.linkedin}, GitHub: ${knowledge.contact.github}.`
+    };
   }
 
   const documents = [
@@ -249,10 +333,14 @@ const getPortfolioAnswer = (question, knowledge) => {
   const topScore = Math.max(...documents.map((doc) => scoreOverlap(tokens, doc)));
 
   if (topScore >= 2) {
-    return `I found relevant details in the portfolio. Try asking directly about projects, skills, certifications, education, or contact for a focused answer.`;
+    return {
+      text: `I found relevant details in the portfolio. Try asking directly about projects, skills, certifications, education, or contact for a focused answer.`
+    };
   }
 
-  return `I can help with: about profile, project details, skills list, certifications/training, education, and contact details.`;
+  return {
+    text: `I can help with: about profile, project details, skills list, certifications/training, education, and contact details. You can also ask: explain this project.`
+  };
 };
 
 const addBotMessage = (message, sender = 'bot') => {
@@ -269,6 +357,9 @@ const addBotMessage = (message, sender = 'bot') => {
 
 if (portfolioBot && botFab && botPanel && botForm && botInput) {
   const knowledge = buildPortfolioKnowledge();
+  const botContext = {
+    activeProjectTitle: knowledge.projects[0] ? knowledge.projects[0].title : ''
+  };
 
   const setBotOpenState = (open) => {
     portfolioBot.classList.toggle('is-open', open);
@@ -288,6 +379,15 @@ if (portfolioBot && botFab && botPanel && botForm && botInput) {
     botClose.addEventListener('click', () => setBotOpenState(false));
   }
 
+  projectCards.forEach((card) => {
+    card.addEventListener('click', () => {
+      const title = getText('h3', card);
+      if (title) {
+        botContext.activeProjectTitle = title;
+      }
+    });
+  });
+
   botForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const question = botInput.value.trim();
@@ -299,8 +399,12 @@ if (portfolioBot && botFab && botPanel && botForm && botInput) {
     addBotMessage(question, 'user');
     botInput.value = '';
 
-    const answer = getPortfolioAnswer(question, knowledge);
-    window.setTimeout(() => addBotMessage(answer, 'bot'), 160);
+    const answerPayload = getPortfolioAnswer(question, knowledge, botContext);
+    if (answerPayload.context?.activeProjectTitle) {
+      botContext.activeProjectTitle = answerPayload.context.activeProjectTitle;
+    }
+
+    window.setTimeout(() => addBotMessage(answerPayload.text, 'bot'), 160);
   });
 
   if (botQuickActions) {
