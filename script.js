@@ -64,14 +64,14 @@ if (document.body) {
     window.addEventListener('load', () => {
       window.setTimeout(() => {
         document.body.classList.add('page-ready');
-      }, 1450);
+      }, 1700);
 
       window.setTimeout(() => {
         document.body.classList.remove('preload');
         if (openingSplash) {
           openingSplash.remove();
         }
-      }, 2250);
+      }, 2600);
     }, { once: true });
   }
 }
