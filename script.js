@@ -15,6 +15,7 @@ const botMessages = document.querySelector('#botMessages');
 const botForm = document.querySelector('#botForm');
 const botInput = document.querySelector('#botInput');
 const botQuickActions = document.querySelector('#botQuickActions');
+const openingSplash = document.querySelector('#openingSplash');
 
 const getSavedTheme = () => {
   try {
@@ -45,10 +46,35 @@ const setTheme = (theme) => {
 };
 
 const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const savedTheme = getSavedTheme();
 const initialTheme = savedTheme || (prefersLight ? 'light' : 'dark');
 
 setTheme(initialTheme);
+
+if (document.body) {
+  if (prefersReducedMotion) {
+    if (openingSplash) {
+      openingSplash.remove();
+    }
+    document.body.classList.add('page-ready');
+  } else {
+    document.body.classList.add('preload');
+
+    window.addEventListener('load', () => {
+      window.setTimeout(() => {
+        document.body.classList.add('page-ready');
+      }, 1450);
+
+      window.setTimeout(() => {
+        document.body.classList.remove('preload');
+        if (openingSplash) {
+          openingSplash.remove();
+        }
+      }, 2250);
+    }, { once: true });
+  }
+}
 
 if (themeToggle) {
   themeToggle.addEventListener('click', () => {
