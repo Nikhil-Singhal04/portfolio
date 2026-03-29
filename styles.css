@@ -325,18 +325,17 @@ main,
 .hero-copy .eyebrow {
   display: inline-flex;
   align-items: center;
-  min-height: 2.15rem;
-  padding: 0.28rem 0.8rem;
-  border-radius: 999px;
-  border: 1px solid var(--hero-eyebrow-border);
-  background: var(--hero-eyebrow-bg);
+  min-height: auto;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
   color: var(--hero-eyebrow-text);
-  font-size: 1.2rem;
+  font-size: clamp(1.75rem, 1.2rem + 1.3vw, 2.3rem);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
-  box-shadow: 0 8px 16px rgba(12, 68, 83, 0.14);
-  animation: slideDownFade 3.5s ease-in-out 0.2s infinite;
+  box-shadow: none;
   margin-bottom: 2rem;
 }
 
