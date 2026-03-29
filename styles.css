@@ -152,6 +152,78 @@ body.preload {
   animation: splash-panel-float 2.6s ease-in-out infinite;
 }
 
+.opening-tech-bubbles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tech-bubble {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  min-width: 5.1rem;
+  padding: 0 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(230, 237, 248, 0.3);
+  background: linear-gradient(125deg, rgba(31, 184, 173, 0.26), rgba(26, 47, 63, 0.62));
+  box-shadow: 0 10px 22px rgba(6, 25, 41, 0.4);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(240, 246, 255, 0.96);
+  backdrop-filter: blur(5px);
+  animation: tech-bubble-float 3.4s ease-in-out infinite;
+}
+
+.tech-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 20% 24%, rgba(255, 255, 255, 0.26), transparent 58%);
+  opacity: 0.55;
+}
+
+.tech-bubble.b1 {
+  top: 15%;
+  left: 13%;
+  animation-delay: 0s;
+}
+
+.tech-bubble.b2 {
+  top: 21%;
+  right: 15%;
+  animation-delay: 0.18s;
+}
+
+.tech-bubble.b3 {
+  top: 50%;
+  left: 7%;
+  animation-delay: 0.36s;
+}
+
+.tech-bubble.b4 {
+  top: 54%;
+  right: 8%;
+  animation-delay: 0.54s;
+}
+
+.tech-bubble.b5 {
+  bottom: 16%;
+  left: 24%;
+  animation-delay: 0.72s;
+}
+
+.tech-bubble.b6 {
+  bottom: 14%;
+  right: 24%;
+  animation-delay: 0.9s;
+}
+
 .opening-kicker,
 .opening-role {
   margin: 0;
@@ -369,6 +441,20 @@ body.page-ready .headshot-panel {
 
   to {
     left: 106%;
+  }
+}
+
+@keyframes tech-bubble-float {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-11px) scale(1.04);
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -1431,6 +1517,8 @@ h2 {
 
 @media (prefers-reduced-motion: reduce) {
   .opening-splash,
+  .opening-tech-bubbles,
+  .tech-bubble,
   .opening-kicker,
   .opening-name,
   .opening-role,
@@ -1473,6 +1561,25 @@ h2 {
 
   body.preload {
     overflow: auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .opening-tech-bubbles {
+    opacity: 0.82;
+  }
+
+  .tech-bubble {
+    height: 2.05rem;
+    min-width: 4.4rem;
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+    padding: 0 0.72rem;
+  }
+
+  .tech-bubble.b3,
+  .tech-bubble.b4 {
+    display: none;
   }
 }
 
